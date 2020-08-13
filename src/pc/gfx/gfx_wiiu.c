@@ -11,6 +11,7 @@
 #include <whb/log.h>
 #include <whb/log_cafe.h>
 #include <whb/log_udp.h>
+#include <stdlib.h>
 
 #include "gfx_window_manager_api.h"
 #include "gfx_screen_config.h"
@@ -26,6 +27,26 @@ static void (*on_fullscreen_changed_callback)(bool is_now_fullscreen);
 static bool (*on_key_down_callback)(int scancode);
 static bool (*on_key_up_callback)(int scancode);
 static void (*on_all_keys_up_callback)(void);
+
+void save_callback(void) {
+    OSSavesDone_ReadyToRelease();
+}
+
+uint32_t exit_callback(void* data) {
+    (void) data;
+    WHBLogPrint("Exit callback");
+
+    whb_free_vbo();
+    whb_free();
+
+    WHBLogCafeDeinit();
+    WHBLogUdpDeinit();
+
+    WHBGfxShutdown();
+    ProcUIShutdown();
+
+    gfx_wiiu_running = false;
+}
 
 static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
     switch (GX2GetSystemTVScanMode()) {
@@ -54,20 +75,17 @@ static void set_fullscreen(bool on, bool call_callback) {
     }
 }
 
-void save_callback() {
-    OSSavesDone_ReadyToRelease();
-}
-
 static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
     (void) game_name;
     (void) start_in_fullscreen;
 
     ProcUIInit(save_callback);
+    ProcUIRegisterCallback(PROCUI_CALLBACK_EXIT, exit_callback, NULL, 0);
 
     gfx_wiiu_running = true;
     WHBGfxInit();
-    WHBLogCafeDeinit();
-    WHBLogUdpDeinit();
+    WHBLogCafeInit();
+    WHBLogUdpInit();
 }
 
 static void gfx_wiiu_set_fullscreen_changed_callback(void (*on_fullscreen_changed)(bool is_now_fullscreen)) {
@@ -112,22 +130,12 @@ static void gfx_wiiu_handle_events(void) {
 
     switch (status) {
         case PROCUI_STATUS_EXITING:
+            WHBLogPrint("Going to exit");
             gfx_wiiu_running = false;
             break;
         case PROCUI_STATUS_RELEASE_FOREGROUND:
             ProcUIDrawDoneRelease();
             break;
-    }
-
-    if (!gfx_wiiu_running) {
-        whb_free_vbo();
-        whb_free();
-
-        WHBLogCafeDeinit();
-        WHBLogUdpDeinit();
-
-        WHBGfxShutdown();
-        ProcUIShutdown();
     }
 }
 
