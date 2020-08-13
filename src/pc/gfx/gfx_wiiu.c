@@ -11,12 +11,10 @@
 #include <whb/log.h>
 #include <whb/log_cafe.h>
 #include <whb/log_udp.h>
-#include <whb/sdcard.h>
 #include <whb/crash.h>
 #include <stdlib.h>
 
 #include "gfx_window_manager_api.h"
-#include "gfx_screen_config.h"
 #include "gfx_whb.h"
 
 #define GFX_API_NAME "Wii U"
@@ -44,11 +42,11 @@ uint32_t exit_callback(void* data) {
     WHBLogCafeDeinit();
     WHBLogUdpDeinit();
 
-    WHBUnmountSdCard();
     WHBGfxShutdown();
-    ProcUIShutdown();
+    // If we call ProcUIShutdown it hangs forever for some reason so let's not
+    //ProcUIShutdown();
 
-    gfx_wiiu_running = false;
+    exit(0);
 }
 
 static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
