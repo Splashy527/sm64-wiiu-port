@@ -11,6 +11,8 @@
 #include <whb/log.h>
 #include <whb/log_cafe.h>
 #include <whb/log_udp.h>
+#include <whb/sdcard.h>
+#include <whb/crash.h>
 #include <stdlib.h>
 
 #include "gfx_window_manager_api.h"
@@ -42,6 +44,7 @@ uint32_t exit_callback(void* data) {
     WHBLogCafeDeinit();
     WHBLogUdpDeinit();
 
+    WHBUnmountSdCard();
     WHBGfxShutdown();
     ProcUIShutdown();
 
@@ -86,6 +89,7 @@ static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
     WHBGfxInit();
     WHBLogCafeInit();
     WHBLogUdpInit();
+    WHBInitCrashHandler();
 }
 
 static void gfx_wiiu_set_fullscreen_changed_callback(void (*on_fullscreen_changed)(bool is_now_fullscreen)) {
