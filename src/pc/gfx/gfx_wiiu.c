@@ -13,6 +13,7 @@
 #include <whb/log_udp.h>
 #include <whb/crash.h>
 #include <stdlib.h>
+#include <macros.h>
 
 #include "gfx_window_manager_api.h"
 #include "gfx_whb.h"
@@ -32,8 +33,7 @@ void save_callback(void) {
     OSSavesDone_ReadyToRelease();
 }
 
-uint32_t exit_callback(void* data) {
-    (void) data;
+uint32_t exit_callback(UNUSED void* data) {
     WHBLogPrint("Exit callback");
 
     whb_free_vbo();
@@ -76,10 +76,7 @@ static void set_fullscreen(bool on, bool call_callback) {
     }
 }
 
-static void gfx_wiiu_init(const char *game_name, bool start_in_fullscreen) {
-    (void) game_name;
-    (void) start_in_fullscreen;
-
+static void gfx_wiiu_init(UNUSED const char *game_name, UNUSED bool start_in_fullscreen) {
     ProcUIInit(save_callback);
     ProcUIRegisterCallback(PROCUI_CALLBACK_EXIT, exit_callback, NULL, 0);
 
@@ -119,12 +116,10 @@ static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
     GX2WaitForVsync();
 }
 
-static void gfx_wiiu_onkeydown(int scancode) {
-    (void) scancode;
+static void gfx_wiiu_onkeydown(UNUSED int scancode) {
 }
 
-static void gfx_wiiu_onkeyup(int scancode) {
-    (void) scancode;
+static void gfx_wiiu_onkeyup(UNUSED int scancode) {
 }
 
 static void gfx_wiiu_handle_events(void) {
@@ -137,6 +132,8 @@ static void gfx_wiiu_handle_events(void) {
             break;
         case PROCUI_STATUS_RELEASE_FOREGROUND:
             ProcUIDrawDoneRelease();
+            break;
+        default:
             break;
     }
 }
