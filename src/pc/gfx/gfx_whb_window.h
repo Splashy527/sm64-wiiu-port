@@ -5,8 +5,8 @@
 
 #include "gfx_window_manager_api.h"
 
-extern struct GfxWindowManagerAPI gfx_wiiu;
-bool gfx_wiiu_is_running();
+extern struct GfxWindowManagerAPI gfx_whb_window;
+bool gfx_whb_window_is_running();
 
 #endif
 #endif

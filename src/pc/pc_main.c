@@ -27,7 +27,7 @@
 #include "gfx/gfx_whb.h"
 #include "gfx/gfx_glx.h"
 #include "gfx/gfx_sdl.h"
-#include "gfx/gfx_wiiu.h"
+#include "gfx/gfx_whb_window.h"
 
 #include "audio/audio_api.h"
 #include "audio/audio_wasapi.h"
@@ -167,7 +167,7 @@ void main_func(void) {
     save_config(); // Mount SD write now
 
     rendering_api = &gfx_whb_api;
-    wm_api = &gfx_wiiu;
+    wm_api = &gfx_whb_window;
     configFullscreen = true;
 #elif defined(ENABLE_DX12)
     rendering_api = &gfx_direct3d12_api;
@@ -233,7 +233,7 @@ void main_func(void) {
 #else
     inited = 1;
 #ifdef TARGET_WII_U
-    while (gfx_wiiu_is_running()) {
+    while (gfx_whb_window_is_running()) {
 #else
     while (1) {
 #endif
