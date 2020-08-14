@@ -25,7 +25,6 @@
 static unsigned int window_width;
 static unsigned int window_height;
 static bool is_running;
-static bool should_run;
 static bool fullscreen_state = false;
 static void (*on_fullscreen_changed_callback)(bool is_now_fullscreen);
 static bool (*on_key_down_callback)(int scancode);
@@ -82,7 +81,6 @@ static void gfx_wiiu_init(UNUSED const char *game_name, UNUSED bool start_in_ful
     ProcUIRegisterCallback(PROCUI_CALLBACK_EXIT, exit_callback, NULL, 0);
 
     is_running = true;
-    should_run = true;
 
     WHBGfxInit();
     GX2SetSwapInterval(2);
@@ -128,18 +126,13 @@ bool gfx_wiiu_is_running(void) {
     switch (status) {
         case PROCUI_STATUS_EXITING:
             WHBLogPrint("Going to exit");
-            should_run = false;
             is_running = false;
             return false;
         case PROCUI_STATUS_RELEASE_FOREGROUND:
             ProcUIDrawDoneRelease();
-            should_run = false;
             break;
         case PROCUI_STATUS_IN_BACKGROUND:
-            should_run = false;
-            break;
         case PROCUI_STATUS_IN_FOREGROUND:
-            should_run = true;
             break;
     }
     return true;
