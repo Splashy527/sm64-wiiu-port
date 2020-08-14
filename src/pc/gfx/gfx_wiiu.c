@@ -146,12 +146,11 @@ bool gfx_wiiu_is_running(void) {
 }
 
 static bool gfx_wiiu_start_frame(void) {
-    WHBGfxBeginRender();
+    GX2WaitForFlip();
     return true;
 }
 
 static void gfx_wiiu_swap_buffers_begin(void) {
-    GX2WaitForFlip();
     WHBGfxFinishRender();
     whb_free_vbo();
 }
