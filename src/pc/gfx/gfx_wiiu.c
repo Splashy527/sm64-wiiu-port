@@ -6,6 +6,7 @@
 #include <whb/log.h>
 #include <gx2/display.h>
 #include <gx2/event.h>
+#include <gx2/swap.h>
 #include <proc_ui/procui.h>
 #include <whb/gfx.h>
 #include <whb/log.h>
@@ -14,6 +15,7 @@
 #include <whb/crash.h>
 #include <stdlib.h>
 #include <macros.h>
+#include <sndcore2/core.h>
 
 #include "gfx_window_manager_api.h"
 #include "gfx_whb.h"
@@ -22,7 +24,8 @@
 
 static unsigned int window_width;
 static unsigned int window_height;
-bool gfx_wiiu_running;
+static bool is_running;
+static bool should_run;
 static bool fullscreen_state = false;
 static void (*on_fullscreen_changed_callback)(bool is_now_fullscreen);
 static bool (*on_key_down_callback)(int scancode);
@@ -35,18 +38,16 @@ void save_callback(void) {
 
 uint32_t exit_callback(UNUSED void* data) {
     WHBLogPrint("Exit callback");
+    is_running = false;
 
     whb_free_vbo();
     whb_free();
 
+    AXQuit();
+    WHBGfxShutdown();
+
     WHBLogCafeDeinit();
     WHBLogUdpDeinit();
-
-    WHBGfxShutdown();
-    // If we call ProcUIShutdown it hangs forever for some reason so let's not
-    //ProcUIShutdown();
-
-    exit(0);
 }
 
 static void gfx_wiiu_get_dimensions(uint32_t *width, uint32_t *height) {
@@ -80,11 +81,13 @@ static void gfx_wiiu_init(UNUSED const char *game_name, UNUSED bool start_in_ful
     ProcUIInit(save_callback);
     ProcUIRegisterCallback(PROCUI_CALLBACK_EXIT, exit_callback, NULL, 0);
 
-    gfx_wiiu_running = true;
+    is_running = true;
+    should_run = true;
+
     WHBGfxInit();
+    GX2SetSwapInterval(2);
     WHBLogCafeInit();
     WHBLogUdpInit();
-    WHBInitCrashHandler();
 }
 
 static void gfx_wiiu_set_fullscreen_changed_callback(void (*on_fullscreen_changed)(bool is_now_fullscreen)) {
@@ -102,18 +105,7 @@ static void gfx_wiiu_set_keyboard_callbacks(bool (*on_key_down)(int scancode), b
 }
 
 static void gfx_wiiu_main_loop(void (*run_one_game_iter)(void)) {
-    // Ensure we run at 30FPS
-    // Fool-proof unless the Wii U is able to
-    // execute `run_one_game_iter()` so fast
-    // that it doesn't even stall for enough time for
-    // the second `GX2WaitForVsync()` to register
-    if (!gfx_wiiu_running) {
-        return;
-    }
-
-    GX2WaitForVsync();
     run_one_game_iter();
-    GX2WaitForVsync();
 }
 
 static void gfx_wiiu_onkeydown(UNUSED int scancode) {
@@ -123,19 +115,34 @@ static void gfx_wiiu_onkeyup(UNUSED int scancode) {
 }
 
 static void gfx_wiiu_handle_events(void) {
+
+}
+
+bool gfx_wiiu_is_running(void) {
+    if (!is_running) {
+        return false;
+    }
+
     ProcUIStatus status = ProcUIProcessMessages(true);
 
     switch (status) {
         case PROCUI_STATUS_EXITING:
             WHBLogPrint("Going to exit");
-            gfx_wiiu_running = false;
-            break;
+            should_run = false;
+            is_running = false;
+            return false;
         case PROCUI_STATUS_RELEASE_FOREGROUND:
             ProcUIDrawDoneRelease();
+            should_run = false;
             break;
-        default:
+        case PROCUI_STATUS_IN_BACKGROUND:
+            should_run = false;
+            break;
+        case PROCUI_STATUS_IN_FOREGROUND:
+            should_run = true;
             break;
     }
+    return true;
 }
 
 static bool gfx_wiiu_start_frame(void) {
@@ -144,6 +151,7 @@ static bool gfx_wiiu_start_frame(void) {
 }
 
 static void gfx_wiiu_swap_buffers_begin(void) {
+    GX2WaitForFlip();
     WHBGfxFinishRender();
     whb_free_vbo();
 }

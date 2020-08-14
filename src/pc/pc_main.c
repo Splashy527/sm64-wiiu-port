@@ -13,6 +13,7 @@
 #include <whb/log.h>
 #include <whb/proc.h>
 #include <whb/crash.h>
+#include <proc_ui/procui.h>
 #endif
 
 #include "sm64.h"
@@ -234,7 +235,7 @@ void main_func(void) {
 #else
     inited = 1;
 #ifdef TARGET_WII_U
-    while (gfx_wiiu_running) {
+    while (gfx_wiiu_is_running()) {
 #else
     while (1) {
 #endif
