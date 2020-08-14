@@ -6,12 +6,10 @@
 #endif
 
 #ifdef TARGET_WII_U
-#include <SDL2/SDL.h>
-
+#include <whb/gfx.h>
 #include <whb/log_cafe.h>
 #include <whb/log_udp.h>
 #include <whb/log.h>
-#include <whb/proc.h>
 #include <whb/crash.h>
 #include <proc_ui/procui.h>
 #endif
